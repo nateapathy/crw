@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Critical Reading Worksheet</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --ink:#1a2733; --muted:#5c6b7a;
+    --line:#dde3ea; --accent:#2f6f8f; --accent-ink:#fff; --accent-soft:#e7f1f6;
+    --ok:#3a8a5f; --warn:#b45a1f; --chip:#eef2f6; --shadow:0 1px 3px rgba(20,40,60,.08);
+    --radius:10px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#141a1f; --panel:#1d252c; --ink:#e8edf1; --muted:#9aa9b6;
+      --line:#2c3843; --accent:#4d9fc4; --accent-ink:#0c1216; --accent-soft:#22333d;
+      --ok:#5cbf8a; --warn:#e0955a; --chip:#26313a; --shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 18px 120px}
+
+  /* header */
+  header.top{position:sticky;top:0;z-index:20;background:var(--bg);
+    border-bottom:1px solid var(--line);padding:14px 18px 12px;margin:0 -18px 18px}
+  header.top .row{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{font-size:18px;margin:0;font-weight:650;letter-spacing:-.01em}
+  h1 span{color:var(--muted);font-weight:400;font-size:13px;display:block;margin-top:1px}
+  .progwrap{flex:1;min-width:160px}
+  .progbar{height:7px;background:var(--chip);border-radius:99px;overflow:hidden}
+  .progbar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+  .progtxt{font-size:11px;color:var(--muted);margin-top:3px}
+  .toolbtns{display:flex;gap:6px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);padding:7px 12px;font-size:13px;font-weight:550}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  button.primary:hover{filter:brightness(1.06)}
+
+  /* DOI / citation card */
+  .metacard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .doiRow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+  .doiRow .f{flex:1;min-width:220px}
+  label.lab{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 4px}
+  input[type=text],textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea{resize:vertical;min-height:60px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  @media(max-width:620px){.grid2{grid-template-columns:1fr}}
+  .fetchmsg{font-size:12px;margin-top:8px;min-height:16px}
+  .fetchmsg.ok{color:var(--ok)} .fetchmsg.err{color:var(--warn)}
+
+  /* accordions */
+  .sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+  .sec>.head{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;user-select:none}
+  .sec>.head:hover{background:var(--accent-soft)}
+  .sec>.head .num{font-size:11px;font-weight:700;color:var(--accent-ink);background:var(--accent);
+    width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none}
+  .sec>.head h2{font-size:15px;margin:0;font-weight:600;flex:1}
+  .sec>.head .dot{width:9px;height:9px;border-radius:99px;background:var(--line);flex:none}
+  .sec>.head .dot.part{background:var(--warn)} .sec>.head .dot.full{background:var(--ok)}
+  .sec>.head .chev{color:var(--muted);transition:transform .2s;flex:none}
+  .sec.open>.head .chev{transform:rotate(90deg)}
+  .sec>.body{display:none;padding:4px 15px 16px;border-top:1px solid var(--line)}
+  .sec.open>.body{display:block}
+  .field{margin-top:13px}
+  .field .lab{display:flex;align-items:center;gap:6px}
+
+  /* tooltip */
+  .tip{position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:15px;height:15px;border-radius:99px;background:var(--chip);color:var(--muted);
+    font-size:10px;font-weight:700;cursor:help;flex:none}
+  .tip:hover>.tipbox{opacity:1;visibility:visible;transform:translateY(0)}
+  .tipbox{position:absolute;bottom:135%;left:50%;transform:translate(-50%,4px);width:250px;
+    background:var(--ink);color:var(--bg);font-size:12px;font-weight:400;line-height:1.45;
+    padding:9px 11px;border-radius:8px;opacity:0;visibility:hidden;transition:.16s;z-index:30;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);text-align:left;pointer-events:none}
+  .tipbox:after{content:"";position:absolute;top:100%;left:50%;margin-left:-5px;
+    border:5px solid transparent;border-top-color:var(--ink)}
+
+  /* threats grid */
+  .threats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  @media(max-width:620px){.threats{grid-template-columns:1fr}}
+  .threat{border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--bg)}
+  .threat.on{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--bg))}
+  .threat .trow{display:flex;align-items:center;gap:7px}
+  .threat input[type=checkbox]{width:15px;height:15px;accent-color:var(--warn);margin:0}
+  .threat label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;cursor:pointer}
+  .threat textarea{display:none;margin-top:7px;min-height:44px;font-size:13px}
+  .threat.on textarea{display:block}
+
+  /* conditional block */
+  .conditional{opacity:.5;pointer-events:none;transition:.2s}
+  .conditional.active{opacity:1;pointer-events:auto}
+  .condnote{font-size:12px;color:var(--muted);font-style:italic;margin:2px 0 0}
+
+  .hint{font-size:12px;color:var(--muted);margin:2px 0 0}
+  footer{margin-top:22px;text-align:center;color:var(--muted);font-size:12px}
+  .saved{font-size:11px;color:var(--muted)}
+
+  /* export modal */
+  .modal{position:fixed;inset:0;background:rgba(10,20,28,.55);display:none;place-items:center;z-index:50;padding:20px}
+  .modal.show{display:grid}
+  .modalcard{background:var(--panel);border-radius:12px;max-width:720px;width:100%;max-height:85vh;
+    display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .modalcard .mh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .modalcard .mh h3{margin:0;font-size:15px;flex:1}
+  .modalcard pre{margin:0;padding:16px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
+    white-space:pre-wrap;word-break:break-word;flex:1}
+  .tabs{display:flex;gap:4px}
+  .tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+  /* worksheet bar */
+  .wsbar{margin-top:11px}
+  .wsbar .wslab{font-size:12px;font-weight:600;color:var(--muted)}
+  #wsSelect{flex:1;min-width:150px;max-width:360px}
+  .wsbar button.del:hover{border-color:var(--warn);color:var(--warn)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="row">
+    <h1>Critical Reading Worksheet<span>Structured appraisal for health services &amp; policy research</span></h1>
+    <div class="progwrap">
+      <div class="progbar"><i id="progFill"></i></div>
+      <div class="progtxt" id="progTxt">0% complete</div>
+    </div>
+  </div>
+  <div class="row wsbar">
+    <span class="wslab">Worksheet</span>
+    <select id="wsSelect" onchange="switchTo(this.value)" title="Switch between saved worksheets"></select>
+    <div class="toolbtns">
+      <button onclick="newWorksheet()">＋ New</button>
+      <button onclick="el('importFile').click()">Import JSON</button>
+      <button onclick="doExport()" class="primary">Export ▾</button>
+      <button class="del" onclick="deleteWorksheet()">Delete</button>
+    </div>
+  </div>
+</header>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+
+<div class="wrap">
+
+  <!-- DOI + citation -->
+  <div class="metacard">
+    <label class="lab" for="doi">DOI — fetch to auto-fill the citation</label>
+    <div class="doiRow">
+      <div class="f"><input type="text" id="doi" placeholder="10.1001/jama.2023.12345" autocomplete="off"></div>
+      <button class="primary" onclick="fetchDOI()">Fetch citation</button>
+    </div>
+    <div class="fetchmsg" id="fetchMsg"></div>
+    <div class="grid2">
+      <div><label class="lab">Journal</label><input type="text" id="m_journal"></div>
+      <div><label class="lab">Year of publication</label><input type="text" id="m_year"></div>
+      <div><label class="lab">Field or topic area <span class="hint" style="display:inline">(becomes a tag)</span></label><input type="text" id="m_field" placeholder="e.g., Medicare payment policy"></div>
+      <div><label class="lab">Authors</label><input type="text" id="m_authors"></div>
+    </div>
+    <div class="field"><label class="lab">Full citation</label>
+      <textarea id="m_citation" placeholder="Auto-filled from DOI, or paste your own"></textarea></div>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>Autosaves in this browser · <span class="saved" id="savedAt"></span></footer>
+</div>
+
+<!-- export modal -->
+<div class="modal" id="modal">
+  <div class="modalcard">
+    <div class="mh">
+      <h3>Export</h3>
+      <div class="tabs">
+        <button data-fmt="ris" class="on" onclick="showFmt('ris')">RIS</button>
+        <button data-fmt="md" onclick="showFmt('md')">Markdown</button>
+        <button data-fmt="json" onclick="showFmt('json')">JSON</button>
+      </div>
+      <button onclick="copyExport()">Copy</button>
+      <button onclick="downloadExport()">Download</button>
+      <button onclick="closeModal()">✕</button>
+    </div>
+    <pre id="exportPre"></pre>
+  </div>
+</div>
+
+<script>
+/* ---------- worksheet schema (mirrors the Google Doc) ---------- */
+const DESIGNS = ["","Randomized controlled trial","Difference-in-differences","Instrumental variables",
+  "Regression discontinuity","Interrupted time series","Cohort (prospective)","Cohort (retrospective)",
+  "Cross-sectional","Case-control","Panel / fixed effects","Matching / propensity score",
+  "Systematic review / meta-analysis","Qualitative","Mixed methods","Simulation / modeling","Other"];
+
+const THREATS = [
+  ["confounding","Confounding","A third variable drives both exposure and outcome, creating a spurious association."],
+  ["selection","Selection bias","The sample or group assignment is related to the outcome, distorting the estimate."],
+  ["reverse","Reverse causality","The outcome may actually be causing the exposure, not the other way around."],
+  ["measurement","Measurement error","Variables are measured imperfectly, biasing estimates (often toward the null)."],
+  ["trends","Differential trends","Groups were already moving on different trajectories before any treatment."],
+  ["spillovers","Spillovers / contamination","Treatment effects leak into the comparison group, muddying the contrast."],
+  ["instrument","Invalid instrument","An IV affects the outcome through paths other than the treatment, or is weak."],
+  ["smalln","Small-sample bias","Too few observations for stable estimates or valid large-sample inference."]
+];
+
+const SECTIONS = [
+  {id:"purpose",title:"Study Purpose & Research Questions",fields:[
+    ["purpose_primary","Primary purpose of study",2],
+    ["purpose_rqs","Stated research questions and/or hypotheses",2],
+    ["purpose_align","How do the RQs align with the stated study purpose?",2]]},
+  {id:"import",title:"Study Importance & Audience",fields:[
+    ["import_arg","What argument do the authors make about why this knowledge gap matters?",2],
+    ["import_aud","What audience / primary stakeholder group is suggested as benefiting?",2]]},
+  {id:"theory",title:"Conceptual Frameworks &/or Theory",fields:[
+    ["theory_model","Stated conceptual or theoretical model (if any)",2],
+    ["theory_constructs","Key constructs and how they relate",2],
+    ["theory_fit","Is the framework appropriate for the RQs and topic?",2]]},
+  {id:"data",title:"Data & Setting",fields:[
+    ["data_sets","Dataset(s) used",1],
+    ["data_period","Data time period (study period)",1],
+    ["data_setting","Geographic or organizational setting",1],
+    ["data_fit","Is the dataset appropriate? Why or why not?",2]]},
+  {id:"sample",title:"Sample & Unit of Analysis",fields:[
+    ["sample_desc","Study sample description",2],
+    ["sample_incl","Inclusion / exclusion criteria",2],
+    ["sample_n","Final sample size",1],
+    ["sample_unit","Unit of analysis",1],
+    ["sample_bias","Potential sampling biases",2]]},
+  {id:"vars",title:"Variables & Measures",fields:[
+    ["vars_iv","Key independent variable(s)",1],
+    ["vars_dv","Key dependent / outcome variable(s)",1],
+    ["vars_ctrl","Main control variables / covariates",2],
+    ["vars_valid","Validity concerns about measures",2]]},
+  {id:"design",title:"Study Design & Empirics",fields:[
+    ["_design_select"],
+    ["_causal_gate"],
+    ["design_fit","Is the design appropriate for causal inference?",2]]},
+  {id:"ident",title:"Identification Strategy",conditional:true,fields:[
+    ["ident_rationale","Authors' rationale for a causal interpretation",2],
+    ["ident_strategy","What do the authors describe as their identification strategy?",2],
+    ["ident_assume","Key assumptions",2],
+    ["ident_plaus","Are these assumptions plausible?",2]]},
+  {id:"internal",title:"Internal Validity",fields:[["_threats"],
+    ["internal_address","What (if anything) do the authors do to address these threats?",2]]},
+  {id:"external",title:"External Validity",fields:[
+    ["external_gen","Evaluate generalizability (sample, setting, time period, context)",2],
+    ["external_pop","Population to which this study most readily generalizes",2]]},
+  {id:"methods",title:"Analytic Approach & Methods",fields:[
+    ["methods_stats","Statistical methods used",2],
+    ["methods_robust","Sensitivity & robustness checks",2],
+    ["methods_fit","Appropriateness of the analyses",2]]},
+  {id:"findings",title:"Main Findings",fields:[
+    ["find_primary","Primary outcomes",2],
+    ["find_effect","Effect sizes & interpretation",2],
+    ["find_sig","Statistical vs. practical significance",2],
+    ["find_sub","Subgroup analysis / heterogeneity findings",2],
+    ["find_null","Unexpected or null results",2]]},
+  {id:"interp",title:"Authors' Interpretation",fields:[
+    ["interp_how","How do the authors interpret their findings?",2],
+    ["interp_logic","Do conclusions follow logically?",2],
+    ["interp_limits","Do authors acknowledge limitations?",2]]},
+  {id:"impl",title:"Implications for Health Policy, Management & HSR",fields:[
+    ["impl_policy","Policy relevance",2],
+    ["impl_delivery","Implications for delivery orgs, payers, clinicians, and/or patients",2],
+    ["impl_support","Are the implications supported by the evidence?",2]]},
+  {id:"assess",title:"Your Critical Assessment",fields:[
+    ["assess_strength","Major strengths",2],
+    ["assess_weak","Major weaknesses",2],
+    ["assess_diff","What would you have done differently?",2],
+    ["assess_future","Future research motivated by this study",2]]},
+  {id:"take",title:"Overall Takeaways",fields:[
+    ["take_summary","Summarize the study's contribution in one paragraph",3]]}
+];
+
+/* ---------- state: a library of worksheets ---------- */
+const LKEY="crw_library_v1", OLDKEY="crw_state_v1";
+let LIB=loadLib();
+let S;                                   // active worksheet (a reference into LIB.items)
+function uid(){return "w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function loadLib(){
+  let lib=null; try{lib=JSON.parse(localStorage.getItem(LKEY))}catch(e){}
+  if(!lib||!lib.items){                  // first run — migrate any old single-slot save
+    let old=null; try{old=JSON.parse(localStorage.getItem(OLDKEY))}catch(e){}
+    const id=uid(); lib={activeId:id,order:[id],items:{}};
+    lib.items[id]=(old&&Object.keys(old).length)?old:{};
+  }
+  if(!lib.order||!lib.order.length)lib.order=Object.keys(lib.items);
+  if(!lib.activeId||!lib.items[lib.activeId])lib.activeId=lib.order[0];
+  return lib;
+}
+function saveLib(){localStorage.setItem(LKEY,JSON.stringify(LIB))}
+function save(){S._t=Date.now();saveLib();updateProgress();updateActiveLabel();stamp();}
+function stamp(){el("savedAt").textContent=S._t?("saved "+new Date(S._t).toLocaleTimeString()):""}
+
+function labelFor(st){
+  const yr=(st.m_year||"").trim();
+  let who=st.m_authors?st.m_authors.split(";")[0].split(",")[0].trim():"";
+  if(!who&&st.m_citation)who=st.m_citation.split(/[.(]/)[0].trim().slice(0,26);
+  const base=[who,yr].filter(Boolean).join(" ");
+  return base||(st.m_field?st.m_field.slice(0,26):"Untitled worksheet");
+}
+function refreshSelector(){
+  el("wsSelect").innerHTML=LIB.order.map(id=>
+    `<option value="${id}"${id===LIB.activeId?" selected":""}>${esc(labelFor(LIB.items[id]))}</option>`).join("");
+}
+function updateActiveLabel(){
+  const opt=el("wsSelect").querySelector('option[value="'+LIB.activeId+'"]');
+  if(opt)opt.textContent=labelFor(S);
+}
+function mountActive(){                   // point S at the active worksheet and re-render everything
+  S=LIB.items[LIB.activeId];
+  META.forEach(id=>{const n=el(id);if(n)n.value=S[id]||""});
+  buildSections();refreshSelector();stamp();
+  el("fetchMsg").textContent="";
+}
+function switchTo(id){save();LIB.activeId=id;saveLib();mountActive()}
+function newWorksheet(){
+  save();const id=uid();LIB.items[id]={};LIB.order.push(id);LIB.activeId=id;saveLib();mountActive();
+  el("sec_"+SECTIONS[0].id).scrollIntoView({behavior:"smooth",block:"start"});
+}
+function deleteWorksheet(){
+  if(LIB.order.length<=1){
+    if(confirm("Clear this worksheet? It's your only one, so this empties it rather than removing it.")){
+      LIB.items[LIB.activeId]={};saveLib();mountActive();}
+    return;
+  }
+  if(!confirm("Delete “"+labelFor(S)+"”? This can't be undone.\n\nTip: Export it to JSON first if you might want it back."))return;
+  const idx=LIB.order.indexOf(LIB.activeId);
+  delete LIB.items[LIB.activeId];LIB.order.splice(idx,1);
+  LIB.activeId=LIB.order[Math.max(0,idx-1)];saveLib();mountActive();
+}
+
+/* ---------- import: rebuild a worksheet from an exported JSON file ---------- */
+function fromExport(o){
+  if(o&&o.responses){                     // clean export shape
+    const st={m_journal:o.journal||"",m_year:o.year||"",m_field:o.field||"",m_authors:o.authors||"",
+      m_citation:o.citation||"",doi:o.doi||"",design_type:o.design_type||"",causal_claim:o.causal_claim||""};
+    Object.entries(o.responses||{}).forEach(([k,v])=>st[k]=v);
+    Object.entries(o.threats||{}).forEach(([tk,note])=>{st["threat_"+tk+"_on"]=true;st["threat_"+tk+"_note"]=note||""});
+    st._t=Date.now();return st;
+  }
+  o=o||{};o._t=Date.now();return o;       // fall back to raw state
+}
+function importJSON(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    let o;try{o=JSON.parse(r.result)}catch(e){alert("That file isn't valid JSON.");return}
+    save();const st=fromExport(o);const id=uid();
+    LIB.items[id]=st;LIB.order.push(id);LIB.activeId=id;saveLib();mountActive();
+  };
+  r.readAsText(file);
+}
+
+/* ---------- render ---------- */
+const META=["m_journal","m_year","m_field","m_authors","m_citation","doi"];
+function el(id){return document.getElementById(id)}
+
+function buildSections(){
+  const host=el("sections");host.innerHTML="";
+  SECTIONS.forEach((sec,i)=>{
+    const d=document.createElement("div");
+    d.className="sec"+(i===0?" open":"")+(sec.conditional?" cond":"");
+    d.id="sec_"+sec.id;
+    let body="";
+    sec.fields.forEach(f=>{
+      const key=f[0];
+      if(key==="_design_select"){
+        body+=`<div class="field"><label class="lab">Study design type <span class="hint" style="display:inline">(becomes a tag)</span></label>
+          <select data-k="design_type" onchange="onInput(this)">${DESIGNS.map(o=>`<option${S.design_type===o?" selected":""}>${o}</option>`).join("")}</select></div>`;
+      }else if(key==="_causal_gate"){
+        const v=S.causal_claim||"";
+        body+=`<div class="field"><label class="lab">Do the authors claim to estimate causal effects?
+          <span class="tip">?<span class="tipbox">Answering “Yes” unlocks the Identification Strategy section below — you only interrogate an identification strategy when a causal claim is on the table.</span></span></label>
+          <select data-k="causal_claim" onchange="onInput(this);syncConditional()">
+            <option value=""${v===""?" selected":""}>—</option>
+            <option value="Yes"${v==="Yes"?" selected":""}>Yes — explicit causal claim</option>
+            <option value="Partially"${v==="Partially"?" selected":""}>Partially / hedged</option>
+            <option value="No"${v==="No"?" selected":""}>No — associational only</option>
+          </select></div>`;
+      }else if(key==="_threats"){
+        body+=`<p class="hint">Check any threat present, then note its implication for interpreting the study. Checked threats become tags.</p><div class="threats">`;
+        THREATS.forEach(([tk,tl,tip])=>{
+          const on=S["threat_"+tk+"_on"];
+          body+=`<div class="threat${on?" on":""}" id="th_${tk}">
+            <div class="trow"><input type="checkbox" id="thc_${tk}" ${on?"checked":""} onchange="toggleThreat('${tk}',this.checked)">
+            <label for="thc_${tk}">${tl}<span class="tip">?<span class="tipbox">${tip}</span></span></label></div>
+            <textarea data-k="threat_${tk}_note" placeholder="Implication for interpretation…" oninput="onInput(this)">${esc(S["threat_"+tk+"_note"]||"")}</textarea></div>`;
+        });
+        body+=`</div>`;
+      }else{
+        const [k,label,rows]=f;
+        body+=`<div class="field"><label class="lab">${label}</label>
+          <textarea data-k="${k}" rows="${rows}" oninput="onInput(this)" style="min-height:${rows*22+18}px">${esc(S[k]||"")}</textarea></div>`;
+      }
+    });
+    d.innerHTML=`<div class="head" onclick="toggleSec('${sec.id}')">
+        <span class="num">${i+1}</span><h2>${sec.title}</h2>
+        <span class="dot" id="dot_${sec.id}"></span>
+        <span class="chev">▶</span></div>
+      <div class="body">${sec.conditional?'<p class="condnote">Unlocked when a causal claim is indicated in section 7.</p>':""}${body}</div>`;
+    host.appendChild(d);
+  });
+  syncConditional();updateProgress();
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+
+function onInput(node){const k=node.getAttribute("data-k");S[k]=node.value;save();markDots();}
+function toggleThreat(tk,on){S["threat_"+tk+"_on"]=on;el("th_"+tk).classList.toggle("on",on);save();markDots();}
+function toggleSec(id){el("sec_"+id).classList.toggle("open")}
+function syncConditional(){
+  const active=(S.causal_claim==="Yes"||S.causal_claim==="Partially");
+  const sec=el("sec_ident");if(!sec)return;
+  const body=sec.querySelector(".body");
+  body.classList.toggle("conditional",true);body.classList.toggle("active",active);
+  if(active&&!sec.classList.contains("_seen")){sec.classList.add("_seen")}
+}
+
+/* meta inputs */
+META.forEach(id=>{}); // wired after DOM ready
+
+/* ---------- progress ---------- */
+function allKeys(){
+  let ks=[];
+  SECTIONS.forEach(sec=>sec.fields.forEach(f=>{
+    const k=f[0];
+    if(k==="_design_select")ks.push("design_type");
+    else if(k==="_causal_gate")ks.push("causal_claim");
+    else if(k==="_threats"){/* handled separately */}
+    else if(!k.startsWith("_"))ks.push(k);
+  }));
+  return ks;
+}
+function sectionFilled(sec){
+  let total=0,done=0;
+  sec.fields.forEach(f=>{const k=f[0];
+    if(k==="_design_select"){total++;if(S.design_type)done++}
+    else if(k==="_causal_gate"){total++;if(S.causal_claim)done++}
+    else if(k==="_threats"){total++;if(THREATS.some(t=>S["threat_"+t[0]+"_on"])||S.internal_address)done++}
+    else if(!k.startsWith("_")){total++;if((S[k]||"").trim())done++}
+  });
+  return {total,done};
+}
+function markDots(){
+  SECTIONS.forEach(sec=>{
+    const {total,done}=sectionFilled(sec);
+    const dot=el("dot_"+sec.id);if(!dot)return;
+    dot.className="dot"+(done===0?"":done>=total?" full":" part");
+  });
+}
+function updateProgress(){
+  markDots();
+  const ks=allKeys();let done=0,total=ks.length;
+  ks.forEach(k=>{if((S[k]||"").toString().trim())done++});
+  // threats section counts as one
+  total+=1;if(THREATS.some(t=>S["threat_"+t[0]+"_on"])||S.internal_address)done++;
+  const pct=Math.round(100*done/total);
+  el("progFill").style.width=pct+"%";
+  el("progTxt").textContent=pct+"% complete";
+}
+
+/* ---------- DOI fetch (CrossRef) ---------- */
+async function fetchDOI(){
+  const raw=el("doi").value.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,"");
+  const msg=el("fetchMsg");
+  if(!raw){msg.className="fetchmsg err";msg.textContent="Enter a DOI first.";return}
+  S.doi=raw;save();
+  msg.className="fetchmsg";msg.textContent="Fetching from CrossRef…";
+  try{
+    const r=await fetch("https://api.crossref.org/works/"+encodeURIComponent(raw),
+      {headers:{Accept:"application/json"}});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const m=(await r.json()).message;
+    const journal=(m["container-title"]||[])[0]||"";
+    const dp=(m.issued||m["published-print"]||m["published-online"]||{})["date-parts"];
+    const year=dp&&dp[0]?dp[0][0]:"";
+    const auth=(m.author||[]).map(a=>((a.family||"")+(a.given?", "+a.given:"")).trim()).filter(Boolean);
+    const title=(m.title||[])[0]||"";
+    setMeta("m_journal",journal);setMeta("m_year",year);setMeta("m_authors",auth.join("; "));
+    const cite=`${auth.slice(0,10).join("; ")}${auth.length>10?" et al.":""} (${year}). ${title}. ${journal}${m.volume?`, ${m.volume}`:""}${m.page?`, ${m.page}`:""}. https://doi.org/${raw}`;
+    setMeta("m_citation",cite.replace(/\s+/g," ").trim());
+    msg.className="fetchmsg ok";msg.textContent="✓ Citation loaded — edit any field as needed.";
+  }catch(e){
+    msg.className="fetchmsg err";
+    msg.textContent="Couldn't fetch that DOI ("+e.message+"). Check the DOI or enter the citation manually.";
+  }
+}
+function setMeta(id,v){el(id).value=v;S[id]=v;save()}
+
+/* ---------- export ---------- */
+function currentFmt(){return document.querySelector(".tabs button.on").dataset.fmt}
+function doExport(){el("modal").classList.add("show");showFmt("ris")}
+function closeModal(){el("modal").classList.remove("show")}
+function showFmt(f){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.fmt===f));
+  el("exportPre").textContent=(f==="ris"?buildRIS():f==="md"?buildMD():buildJSON());
+}
+function tags(){
+  const t=[];
+  if(S.m_field)t.push("field:"+S.m_field.trim());
+  if(S.design_type)t.push("design:"+S.design_type);
+  if(S.causal_claim)t.push("causal-claim:"+S.causal_claim.toLowerCase());
+  THREATS.forEach(([tk,tl])=>{if(S["threat_"+tk+"_on"])t.push("threat:"+tk)});
+  return t;
+}
+function worksheetText(){
+  let out=[];
+  SECTIONS.forEach((sec,i)=>{
+    let lines=[];
+    sec.fields.forEach(f=>{const k=f[0];
+      if(k==="_design_select"){if(S.design_type)lines.push("Study design type: "+S.design_type)}
+      else if(k==="_causal_gate"){if(S.causal_claim)lines.push("Claims causal effects: "+S.causal_claim)}
+      else if(k==="_threats"){
+        const on=THREATS.filter(t=>S["threat_"+t[0]+"_on"]);
+        if(on.length){lines.push("Threats present: "+on.map(t=>t[1]).join(", "));
+          on.forEach(t=>{const n=(S["threat_"+t[0]+"_note"]||"").trim();if(n)lines.push("  • "+t[1]+": "+n)})}
+      }else if(!k.startsWith("_")){const v=(S[k]||"").trim();if(v)lines.push(f[1]+": "+v)}
+    });
+    if(lines.length)out.push("## "+(i+1)+". "+sec.title+"\n"+lines.join("\n"));
+  });
+  return out.join("\n\n");
+}
+function buildMD(){
+  let h=`# Critical Reading Worksheet\n`;
+  if(S.m_citation)h+=`\n**Citation:** ${S.m_citation}\n`;
+  if(S.doi)h+=`**DOI:** ${S.doi}\n`;
+  if(tags().length)h+=`**Tags:** ${tags().join(", ")}\n`;
+  return h+"\n"+worksheetText();
+}
+function buildRIS(){
+  const L=[];
+  L.push("TY  - JOUR");
+  (S.m_authors||"").split(";").map(a=>a.trim()).filter(Boolean).forEach(a=>L.push("AU  - "+a));
+  if(S.m_citation&&!S.m_authors){/* skip */}
+  const title=(S.m_citation||"").split(".")[1]; // best-effort; user can edit
+  if(S.m_journal)L.push("JO  - "+S.m_journal);
+  if(S.m_year)L.push("PY  - "+S.m_year);
+  if(S.doi)L.push("DO  - "+S.doi);
+  tags().forEach(t=>L.push("KW  - "+t));
+  // Notes: entire worksheet. Single N1 with newlines — importers read until next tag.
+  const note="CRITICAL READING WORKSHEET\n"+(S.m_citation?S.m_citation+"\n\n":"")+worksheetText();
+  L.push("N1  - "+note);
+  L.push("ER  - ");
+  return L.join("\r\n")+"\r\n";
+}
+function buildJSON(){
+  const o={doi:S.doi||"",journal:S.m_journal||"",year:S.m_year||"",field:S.m_field||"",
+    authors:S.m_authors||"",citation:S.m_citation||"",design_type:S.design_type||"",
+    causal_claim:S.causal_claim||"",tags:tags(),responses:{},threats:{}};
+  allKeys().forEach(k=>{if(S[k])o.responses[k]=S[k]});
+  THREATS.forEach(([tk])=>{if(S["threat_"+tk+"_on"])o.threats[tk]=S["threat_"+tk+"_note"]||""});
+  return JSON.stringify(o,null,2);
+}
+function copyExport(){navigator.clipboard.writeText(el("exportPre").textContent)
+  .then(()=>{const b=event.target;const o=b.textContent;b.textContent="Copied ✓";setTimeout(()=>b.textContent=o,1200)})}
+function downloadExport(){
+  const f=currentFmt();const ext={ris:"ris",md:"md",json:"json"}[f];
+  const mime={ris:"application/x-research-info-systems",md:"text/markdown",json:"application/json"}[f];
+  const base=(S.m_year||"paper")+"-"+((S.m_authors||"worksheet").split(",")[0].split(";")[0].trim().replace(/\W+/g,"")||"worksheet");
+  const blob=new Blob([el("exportPre").textContent],{type:mime});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=base+"-worksheet."+ext;a.click();
+}
+
+/* ---------- init ---------- */
+document.addEventListener("DOMContentLoaded",()=>{
+  META.forEach(id=>{const n=el(id);if(!n)return;
+    n.addEventListener("input",()=>{S[id]=n.value;save()})});
+  el("importFile").addEventListener("change",e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=""});
+  el("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+  mountActive();
+});
+</script>
+</body>
+</html>
