@@ -5,17 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Critical Reading Worksheet</title>
 <style>
+  /* University of Maryland palette — warm neutrals dominant, red/gold/bronze as accents */
   :root{
-    --bg:#f4f6f8; --panel:#ffffff; --ink:#1a2733; --muted:#5c6b7a;
-    --line:#dde3ea; --accent:#2f6f8f; --accent-ink:#fff; --accent-soft:#e7f1f6;
-    --ok:#3a8a5f; --warn:#b45a1f; --chip:#eef2f6; --shadow:0 1px 3px rgba(20,40,60,.08);
+    --bg:#f5f3ef; --panel:#ffffff; --ink:#242220; --muted:#6d6862;
+    --line:#e5e0d8; --accent:#c01230; --accent-ink:#fff; --accent-soft:#f7e8ea;
+    --gold:#ffd200; --bronze:#96612a; --badge-ink:#ffffff;
+    --ok:#3a7d53; --warn:#a9671e; --chip:#efece6; --shadow:0 1px 3px rgba(40,30,20,.09);
     --radius:10px;
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#141a1f; --panel:#1d252c; --ink:#e8edf1; --muted:#9aa9b6;
-      --line:#2c3843; --accent:#4d9fc4; --accent-ink:#0c1216; --accent-soft:#22333d;
-      --ok:#5cbf8a; --warn:#e0955a; --chip:#26313a; --shadow:0 1px 3px rgba(0,0,0,.4);
+      --bg:#1b1917; --panel:#252220; --ink:#ece7e0; --muted:#a49d94;
+      --line:#39342e; --accent:#ef3b52; --accent-ink:#fff; --accent-soft:#3a2224;
+      --gold:#ffd200; --bronze:#c98f4f; --badge-ink:#241a10;
+      --ok:#5cbf8a; --warn:#d8934e; --chip:#302b26; --shadow:0 1px 3px rgba(0,0,0,.4);
     }
   }
   *{box-sizing:border-box}
@@ -61,11 +64,11 @@
     margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
   .sec>.head{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;user-select:none}
   .sec>.head:hover{background:var(--accent-soft)}
-  .sec>.head .num{font-size:11px;font-weight:700;color:var(--accent-ink);background:var(--accent);
+  .sec>.head .num{font-size:11px;font-weight:700;color:var(--badge-ink);background:var(--bronze);
     width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none}
   .sec>.head h2{font-size:15px;margin:0;font-weight:600;flex:1}
   .sec>.head .dot{width:9px;height:9px;border-radius:99px;background:var(--line);flex:none}
-  .sec>.head .dot.part{background:var(--warn)} .sec>.head .dot.full{background:var(--ok)}
+  .sec>.head .dot.part{background:var(--bronze)} .sec>.head .dot.full{background:var(--gold)}
   .sec>.head .chev{color:var(--muted);transition:transform .2s;flex:none}
   .sec.open>.head .chev{transform:rotate(90deg)}
   .sec>.body{display:none;padding:4px 15px 16px;border-top:1px solid var(--line)}
