@@ -297,9 +297,9 @@ function save(){S._t=Date.now();saveLib();updateProgress();updateActiveLabel();s
 function stamp(){el("savedAt").textContent=S._t?("saved "+new Date(S._t).toLocaleTimeString()):""}
 
 function labelFor(st){
-  const yr=(st.m_year||"").trim();
-  let who=st.m_authors?st.m_authors.split(";")[0].split(",")[0].trim():"";
-  if(!who&&st.m_citation)who=st.m_citation.split(/[.(]/)[0].trim().slice(0,26);
+  const yr=String(st.m_year||"").trim();
+  let who=st.m_authors?String(st.m_authors).split(";")[0].split(",")[0].trim():"";
+  if(!who&&st.m_citation)who=String(st.m_citation).split(/[.(]/)[0].trim().slice(0,26);
   const base=[who,yr].filter(Boolean).join(" ");
   return base||(st.m_field?st.m_field.slice(0,26):"Untitled worksheet");
 }
@@ -488,7 +488,7 @@ async function fetchDOI(){
     msg.textContent="Couldn't fetch that DOI ("+e.message+"). Check the DOI or enter the citation manually.";
   }
 }
-function setMeta(id,v){el(id).value=v;S[id]=v;save()}
+function setMeta(id,v){v=(v==null?"":String(v));el(id).value=v;S[id]=v;save()}
 
 /* ---------- export ---------- */
 function currentFmt(){return document.querySelector(".tabs button.on").dataset.fmt}
