@@ -113,8 +113,10 @@
   .modal.show{display:grid}
   .modalcard{background:var(--panel);border-radius:12px;max-width:720px;width:100%;max-height:85vh;
     display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-  .modalcard .mh{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .modalcard .mh{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
   .modalcard .mh h3{margin:0;font-size:15px;flex:1}
+  .msep{width:1px;align-self:stretch;background:var(--line);margin:2px 2px}
+  .exphint{margin:0;padding:9px 16px 0;font-size:12px;color:var(--muted)}
   .modalcard pre{margin:0;padding:16px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
     white-space:pre-wrap;word-break:break-word;flex:1}
   .tabs{display:flex;gap:4px}
@@ -221,8 +223,12 @@
       </div>
       <button onclick="copyExport()">Copy</button>
       <button onclick="downloadExport()">Download</button>
+      <span class="msep"></span>
+      <button onclick="exportDocx()" title="Download a formatted Word document">Word .docx</button>
+      <button onclick="exportPDF()" title="Open the print dialog — choose “Save as PDF”">PDF</button>
       <button onclick="closeModal()">✕</button>
     </div>
+    <p class="exphint">The three tabs above are for reference managers and re-loading here. <b>Word</b> and <b>PDF</b> are human-readable documents — they download/print the filled worksheet directly (no preview).</p>
     <pre id="exportPre"></pre>
   </div>
 </div>
@@ -596,22 +602,30 @@ function tags(){
   THREATS.forEach(([tk,tl])=>{if(S["threat_"+tk+"_on"])t.push("threat:"+tk)});
   return t;
 }
-function worksheetText(){
-  let out=[];
+/* structured content model shared by every export */
+function collectSections(){
+  const out=[];
   SECTIONS.forEach((sec,i)=>{
-    let lines=[];
+    const items=[];
     sec.fields.forEach(f=>{const k=f[0];
-      if(k==="_design_select"){if(S.design_type)lines.push("Study design type: "+S.design_type)}
-      else if(k==="_causal_gate"){if(S.causal_claim)lines.push("Claims causal effects: "+S.causal_claim)}
+      if(k==="_design_select"){if(S.design_type)items.push(["Study design type",S.design_type])}
+      else if(k==="_causal_gate"){if(S.causal_claim)items.push(["Claims causal effects",S.causal_claim])}
       else if(k==="_threats"){
         const on=THREATS.filter(t=>S["threat_"+t[0]+"_on"]);
-        if(on.length){lines.push("Threats present: "+on.map(t=>t[1]).join(", "));
-          on.forEach(t=>{const n=(S["threat_"+t[0]+"_note"]||"").trim();if(n)lines.push("  • "+t[1]+": "+n)})}
-      }else if(!k.startsWith("_")){const v=(S[k]||"").trim();if(v)lines.push(f[1]+": "+v)}
+        if(on.length){
+          items.push(["Threats present",on.map(t=>t[1]).join(", ")]);
+          on.forEach(t=>{const n=(S["threat_"+t[0]+"_note"]||"").trim();if(n)items.push([t[1],n])});
+        }
+      }else if(!k.startsWith("_")){const v=(S[k]||"").trim();if(v)items.push([f[1],v])}
     });
-    if(lines.length)out.push("## "+(i+1)+". "+sec.title+"\n"+lines.join("\n"));
+    if(items.length)out.push({n:i+1,title:sec.title,items});
   });
-  return out.join("\n\n");
+  return out;
+}
+function worksheetText(){
+  return collectSections().map(s=>
+    "## "+s.n+". "+s.title+"\n"+s.items.map(([l,v])=>l+": "+v).join("\n")
+  ).join("\n\n");
 }
 function buildMD(){
   let h=`# Critical Reading Worksheet\n`;
@@ -646,12 +660,133 @@ function buildJSON(){
 }
 function copyExport(){navigator.clipboard.writeText(el("exportPre").textContent)
   .then(()=>{const b=event.target;const o=b.textContent;b.textContent="Copied ✓";setTimeout(()=>b.textContent=o,1200)})}
+function baseName(){
+  return (S.m_year||"paper")+"-"+((S.m_authors||"worksheet").split(",")[0].split(";")[0].trim().replace(/\W+/g,"")||"worksheet")+"-worksheet";
+}
+function downloadBlob(blob,filename){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;
+  document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},500);
+}
 function downloadExport(){
   const f=currentFmt();const ext={ris:"ris",md:"md",json:"json"}[f];
   const mime={ris:"application/x-research-info-systems",md:"text/markdown",json:"application/json"}[f];
-  const base=(S.m_year||"paper")+"-"+((S.m_authors||"worksheet").split(",")[0].split(";")[0].trim().replace(/\W+/g,"")||"worksheet");
-  const blob=new Blob([el("exportPre").textContent],{type:mime});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=base+"-worksheet."+ext;a.click();
+  downloadBlob(new Blob([el("exportPre").textContent],{type:mime}),baseName()+"."+ext);
+}
+
+/* ---------- human-readable: PDF (via print) & Word (.docx) ---------- */
+function metaLine(){return [S.m_journal,S.m_year?("("+S.m_year+")"):"",S.m_field].filter(Boolean).join(" · ")}
+function hesc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+
+function buildPrintableHTML(){
+  const secs=collectSections();
+  const tg=tags();
+  const head=`<header>
+    <h1>Critical Reading Worksheet</h1>
+    <p class="sub">Structured appraisal for health services &amp; policy research</p>
+    ${S.m_citation?`<p class="cite">${hesc(S.m_citation)}</p>`:""}
+    ${metaLine()?`<p class="meta">${hesc(metaLine())}</p>`:""}
+    ${S.doi?`<p class="meta">DOI: ${hesc(S.doi)}</p>`:""}
+    ${tg.length?`<p class="tags">${tg.map(t=>`<span>${hesc(t)}</span>`).join("")}</p>`:""}
+  </header>`;
+  const body=secs.length?secs.map(s=>`<section>
+      <h2><span class="n">${s.n}</span>${hesc(s.title)}</h2>
+      ${s.items.map(([l,v])=>`<div class="it"><div class="l">${hesc(l)}</div><div class="v">${hesc(v).replace(/\n/g,"<br>")}</div></div>`).join("")}
+    </section>`).join(""):`<p class="empty">This worksheet is empty — nothing filled in yet.</p>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${hesc(baseName())}</title>
+<style>
+  *{box-sizing:border-box}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font:12pt/1.5 Georgia,"Times New Roman",serif;color:#1c1c1c;background:#fff;margin:0;padding:32px 40px;max-width:760px}
+  header{border-bottom:2px solid #c01230;padding-bottom:12px;margin-bottom:8px}
+  h1{font-size:20pt;margin:0;color:#c01230;font-family:Helvetica,Arial,sans-serif}
+  .sub{margin:2px 0 8px;color:#666;font-size:10pt;font-family:Helvetica,Arial,sans-serif}
+  .cite{margin:6px 0 2px;font-size:10.5pt}
+  .meta{margin:1px 0;color:#555;font-size:9.5pt;font-family:Helvetica,Arial,sans-serif}
+  .tags{margin:7px 0 0;font-family:Helvetica,Arial,sans-serif}
+  .tags span{display:inline-block;background:#efece6;border:1px solid #e0dace;border-radius:10px;
+    padding:1px 8px;font-size:8.5pt;color:#5a5148;margin:2px 4px 0 0}
+  section{margin:16px 0 0;break-inside:avoid}
+  h2{font-size:12.5pt;color:#96612a;font-family:Helvetica,Arial,sans-serif;
+    border-bottom:1px solid #e5e0d8;padding-bottom:3px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  h2 .n{background:#96612a;color:#fff;width:20px;height:20px;border-radius:5px;display:inline-grid;
+    place-items:center;font-size:10pt;flex:none}
+  .it{margin:5px 0;break-inside:avoid}
+  .it .l{font-weight:700;font-size:10pt;font-family:Helvetica,Arial,sans-serif}
+  .it .v{margin:1px 0 0;white-space:normal}
+  .empty{color:#888;font-style:italic}
+  @page{margin:0.7in}
+  @media print{body{padding:0;max-width:none}}
+</style></head><body>${head}${body}</body></html>`;
+}
+function exportPDF(){
+  const ifr=document.createElement("iframe");
+  ifr.setAttribute("aria-hidden","true");
+  ifr.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  document.body.appendChild(ifr);
+  const doc=ifr.contentWindow.document;doc.open();doc.write(buildPrintableHTML());doc.close();
+  setTimeout(()=>{try{ifr.contentWindow.focus();ifr.contentWindow.print()}catch(e){alert("Couldn't open the print dialog: "+e.message)}
+    setTimeout(()=>ifr.remove(),2000)},350);
+}
+
+/* ---- minimal .docx writer: OOXML + a tiny stored-ZIP packer (no libraries) ---- */
+const CRC_TABLE=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_TABLE[(c^b[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function sb(s){return new TextEncoder().encode(s)}
+function makeZip(files){
+  const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  const locals=[],centrals=[];let offset=0;
+  files.forEach(f=>{
+    const data=f.data, crc=crc32(data), name=sb(f.name);
+    const lh=[].concat(u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0));
+    const lb=new Uint8Array(lh.length+name.length+data.length);
+    lb.set(lh,0);lb.set(name,lh.length);lb.set(data,lh.length+name.length);
+    locals.push(lb);
+    const ch=[].concat(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset));
+    const cb=new Uint8Array(ch.length+name.length);cb.set(ch,0);cb.set(name,ch.length);
+    centrals.push(cb);offset+=lb.length;
+  });
+  const cSize=centrals.reduce((a,b)=>a+b.length,0), cOff=offset;
+  const end=[].concat(u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(cSize),u32(cOff),u16(0));
+  const out=new Uint8Array(offset+cSize+end.length);let p=0;
+  locals.forEach(b=>{out.set(b,p);p+=b.length});centrals.forEach(b=>{out.set(b,p);p+=b.length});out.set(end,p);
+  return out;
+}
+function xesc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function runs(text){ // value text with line breaks, normal weight
+  return String(text).split("\n").map((p,i)=>(i?"<w:br/>":"")+`<w:t xml:space="preserve">${xesc(p)}</w:t>`).join("");
+}
+function docParas(){
+  const P=[];
+  const title=`<w:p><w:pPr><w:spacing w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/><w:color w:val="C01230"/></w:rPr><w:t>Critical Reading Worksheet</w:t></w:r></w:p>`;
+  const sub=`<w:p><w:pPr><w:spacing w:after="120"/><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="2" w:color="C01230"/></w:pBdr></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="666666"/></w:rPr><w:t>Structured appraisal for health services &amp; policy research</w:t></w:r></w:p>`;
+  P.push(title,sub);
+  if(S.m_citation)P.push(`<w:p><w:pPr><w:spacing w:after="40"/></w:pPr><w:r><w:rPr><w:sz w:val="21"/><w:szCs w:val="21"/></w:rPr>${runs(S.m_citation)}</w:r></w:p>`);
+  const ml=[metaLine(),S.doi?("DOI: "+S.doi):""].filter(Boolean).join("    ");
+  if(ml)P.push(`<w:p><w:pPr><w:spacing w:after="40"/></w:pPr><w:r><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="555555"/></w:rPr><w:t xml:space="preserve">${xesc(ml)}</w:t></w:r></w:p>`);
+  if(tags().length)P.push(`<w:p><w:pPr><w:spacing w:after="120"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="17"/><w:szCs w:val="17"/><w:color w:val="7a7168"/></w:rPr><w:t xml:space="preserve">Tags: ${xesc(tags().join(",  "))}</w:t></w:r></w:p>`);
+  const secs=collectSections();
+  if(!secs.length)P.push(`<w:p><w:r><w:rPr><w:i/><w:color w:val="888888"/></w:rPr><w:t>This worksheet is empty — nothing filled in yet.</w:t></w:r></w:p>`);
+  secs.forEach(s=>{
+    P.push(`<w:p><w:pPr><w:spacing w:before="240" w:after="60"/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="2" w:color="E5E0D8"/></w:pBdr></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="26"/><w:szCs w:val="26"/><w:color w:val="96612A"/></w:rPr><w:t xml:space="preserve">${s.n}. ${xesc(s.title)}</w:t></w:r></w:p>`);
+    s.items.forEach(([l,v])=>{
+      P.push(`<w:p><w:pPr><w:spacing w:after="80"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">${xesc(l)}: </w:t></w:r><w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr>${runs(v)}</w:r></w:p>`);
+    });
+  });
+  return P.join("");
+}
+function exportDocx(){
+  const CT=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
+  const RELS=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
+  const DOC=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${docParas()}<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const zip=makeZip([
+    {name:"[Content_Types].xml",data:sb(CT)},
+    {name:"_rels/.rels",data:sb(RELS)},
+    {name:"word/document.xml",data:sb(DOC)}
+  ]);
+  downloadBlob(new Blob([zip],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}),baseName()+".docx");
 }
 
 /* ---------- init ---------- */
