@@ -125,6 +125,33 @@
   .wsbar .wslab{font-size:12px;font-weight:600;color:var(--muted)}
   #wsSelect{flex:1;min-width:150px;max-width:360px}
   .wsbar button.del:hover{border-color:var(--warn);color:var(--warn)}
+  .wsbar button.guide{border-color:var(--accent);color:var(--accent)}
+
+  /* saving tip banner */
+  .tipbar{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);
+    border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;
+    padding:11px 13px;margin-bottom:16px;font-size:13px;color:var(--ink)}
+  .tipbar .ic{flex:none;font-size:15px;line-height:1.3}
+  .tipbar a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none}
+  .tipbar a:hover{text-decoration:underline}
+  .tipbar .x{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;
+    font-size:15px;padding:0 2px;line-height:1;flex:none}
+  .tipbar .x:hover{color:var(--ink)}
+
+  /* how-to guide */
+  .guideHead h3{margin:0;font-size:16px;flex:1}
+  .guidebody{padding:6px 20px 22px;overflow:auto;line-height:1.55;flex:1}
+  .guidebody h4{font-size:14px;margin:20px 0 7px;color:var(--accent);display:flex;align-items:center;gap:8px}
+  .guidebody h4 .gn{background:var(--bronze);color:var(--badge-ink);width:20px;height:20px;
+    border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+  .guidebody p{margin:6px 0} .guidebody b{font-weight:650}
+  .guidebody ol,.guidebody ul{margin:6px 0;padding-left:22px} .guidebody li{margin:4px 0}
+  .guidebody code{background:var(--chip);border-radius:5px;padding:1px 5px;font-size:12px;
+    font-family:ui-monospace,Menlo,Consolas,monospace}
+  .guidebody .note{background:var(--chip);border-radius:8px;padding:9px 11px;margin:9px 0;font-size:13px}
+  .guidebody table{border-collapse:collapse;width:100%;margin:9px 0;font-size:13px}
+  .guidebody th,.guidebody td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+  .guidebody th{background:var(--chip);font-weight:600}
 </style>
 </head>
 <body>
@@ -140,6 +167,7 @@
     <span class="wslab">Worksheet</span>
     <select id="wsSelect" onchange="switchTo(this.value)" title="Switch between saved worksheets"></select>
     <div class="toolbtns">
+      <button class="guide" onclick="openGuide()" title="How to use this worksheet">ⓘ How to use</button>
       <button onclick="newWorksheet()">＋ New</button>
       <button onclick="el('importFile').click()">Import JSON</button>
       <button onclick="doExport()" class="primary">Export ▾</button>
@@ -150,6 +178,13 @@
 <input type="file" id="importFile" accept=".json,application/json" style="display:none">
 
 <div class="wrap">
+
+  <!-- saving tip for students -->
+  <div class="tipbar" id="tipbar">
+    <span class="ic">💾</span>
+    <div>Your answers <b>autosave in this browser on this device.</b> To keep a copy you can reopen anywhere — or attach to a reference manager — use <b>Export</b> (JSON to save your progress, RIS to attach to a reference). <a onclick="openGuide()">Read the full guide →</a></div>
+    <button class="x" onclick="hideTip()" title="Dismiss">✕</button>
+  </div>
 
   <!-- DOI + citation -->
   <div class="metacard">
@@ -189,6 +224,55 @@
       <button onclick="closeModal()">✕</button>
     </div>
     <pre id="exportPre"></pre>
+  </div>
+</div>
+
+<!-- how-to guide -->
+<div class="modal" id="guide">
+  <div class="modalcard">
+    <div class="mh guideHead"><h3>How to use this worksheet</h3><button onclick="closeGuide()">✕</button></div>
+    <div class="guidebody">
+      <p>This worksheet walks you through appraising a research paper section by section, then hands the result off to your reference manager. Here's the whole workflow.</p>
+
+      <h4><span class="gn">1</span>Fill it out</h4>
+      <ul>
+        <li>Paste a paper's <b>DOI</b> at the top and click <b>Fetch citation</b> to auto-fill the journal, year, authors, and citation. Every field stays editable.</li>
+        <li>Work down the numbered sections — click a header to expand it. Its dot turns <b>bronze</b> when you start it and <b>gold</b> when it's complete; the bar up top tracks overall progress.</li>
+        <li>Hover the <b>?</b> icons for definitions (for example, each internal-validity threat).</li>
+        <li>The <b>Identification Strategy</b> section stays locked until you indicate the authors make a causal claim — that's intentional: you only interrogate an identification strategy when a causal claim is on the table.</li>
+      </ul>
+
+      <h4><span class="gn">2</span>How saving works</h4>
+      <p>Everything you type <b>autosaves automatically</b> — but only in <b>this web browser on this computer</b>. There's nothing to click day-to-day.</p>
+      <ul>
+        <li><b>Multiple papers:</b> use the <b>Worksheet</b> dropdown and <b>＋ New</b> to keep a separate worksheet for each paper, and switch between them anytime.</li>
+        <li><b>Autosave won't follow you</b> to another browser or computer, and it can be erased by a private/incognito window or by clearing your browsing data.</li>
+      </ul>
+      <div class="note">✅ <b>The habit to build:</b> when you finish a paper, click <b>Export → JSON → Download</b>. That file is your durable, portable copy. To resume later — on any device — click <b>Import JSON</b> and pick that file.</div>
+
+      <h4><span class="gn">3</span>Attach it to your reference manager</h4>
+      <p>The completed worksheet can travel with the paper in Paperpile, Zotero, or Mendeley.</p>
+      <p><b>If the paper isn't in your library yet:</b></p>
+      <ol>
+        <li>Click <b>Export → RIS → Download</b>.</li>
+        <li>Import that <code>.ris</code> file into your reference manager.</li>
+        <li>You get a reference entry with the <b>full worksheet in its Notes</b> and your key answers (field, study design, causal claim, flagged threats) as <b>tags</b>.</li>
+      </ol>
+      <p><b>If the paper is already in your library</b> (importing RIS would create a duplicate):</p>
+      <ol>
+        <li>Click <b>Export → Markdown → Copy</b>.</li>
+        <li>Open the existing reference and <b>paste</b> into its Notes field.</li>
+      </ol>
+      <div class="note">In <b>Zotero</b>, the RIS note imports as a child note and the tags attach to the item. In <b>Paperpile</b> and <b>Mendeley</b>, the worksheet lands in the reference's Notes and the keywords import as labels/tags.</div>
+
+      <h4><span class="gn">4</span>Which export do I use?</h4>
+      <table>
+        <tr><th>Format</th><th>Use it to…</th></tr>
+        <tr><td><b>RIS</b></td><td>Attach the worksheet to a <b>new</b> reference-manager entry (notes + tags).</td></tr>
+        <tr><td><b>Markdown</b></td><td>Paste into an <b>existing</b> reference's notes, an email, or a doc.</td></tr>
+        <tr><td><b>JSON</b></td><td><b>Save &amp; reload</b> the worksheet here later, or move it to another device.</td></tr>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -497,6 +581,9 @@ function setMeta(id,v){v=(v==null?"":String(v));el(id).value=v;S[id]=v;save()}
 function currentFmt(){return document.querySelector(".tabs button.on").dataset.fmt}
 function doExport(){el("modal").classList.add("show");showFmt("ris")}
 function closeModal(){el("modal").classList.remove("show")}
+function openGuide(){el("guide").classList.add("show")}
+function closeGuide(){el("guide").classList.remove("show")}
+function hideTip(){el("tipbar").style.display="none";try{localStorage.setItem("crw_hidetip","1")}catch(e){}}
 function showFmt(f){
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.fmt===f));
   el("exportPre").textContent=(f==="ris"?buildRIS():f==="md"?buildMD():buildJSON());
@@ -573,6 +660,9 @@ document.addEventListener("DOMContentLoaded",()=>{
     n.addEventListener("input",()=>{S[id]=n.value;save()})});
   el("importFile").addEventListener("change",e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=""});
   el("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+  el("guide").addEventListener("click",e=>{if(e.target.id==="guide")closeGuide()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeGuide()}});
+  try{if(localStorage.getItem("crw_hidetip"))el("tipbar").style.display="none"}catch(e){}
   mountActive();
 });
 </script>
